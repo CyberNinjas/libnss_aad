@@ -1,9 +1,11 @@
-FROM debian:9.7 as libjwt
+FROM debian:9.7
 
 RUN apt update && apt install -y \
         automake \
         build-essential \
+        cmake \
         git \
+        libcurl4-openssl-dev \
         libjansson-dev \
         libssl-dev \
         libtool \
@@ -14,13 +16,11 @@ RUN git clone https://github.com/benmcollins/libjwt && \
     cd libjwt && git checkout tags/v1.10.1 && \
     autoreconf -i && ./configure && make && make install
 
-FROM debian:9.7
+WORKDIR /tmp
+RUN git clone https://github.com/DaveGamble/cJSON && \
+    cd cJSON && git checkout tags/v1.7.10 && \
+    mkdir build && cd build && cmake .. && make && make install
 
 WORKDIR /usr/src/libnss_aad
 COPY . /usr/src/libnss_aad
-
-COPY --from=libjwt /usr/local/lib /usr/local/lib
-COPY --from=libjwt /usr/local/include /usr/local/include
-
-RUN apt update && apt upgrade -y && \
-    apt install -y gcc libcurl4-openssl-dev make && make
+RUN make

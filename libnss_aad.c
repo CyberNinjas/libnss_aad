@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include <curl/curl.h>
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 #include "sds.h"
 
 #define MIN_UID_NUMBER 500
