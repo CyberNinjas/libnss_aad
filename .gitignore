@@ -1,1 +1,2 @@
 libnss_aad.so.2
+*.c~
