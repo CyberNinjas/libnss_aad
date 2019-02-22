@@ -8,7 +8,7 @@
 
 #include <curl/curl.h>
 #include <cjson/cJSON.h>
-#include "sds.h"
+#include <sds/sds.h>
 
 #define MIN_UID 1000
 #define MIN_GID 1000
