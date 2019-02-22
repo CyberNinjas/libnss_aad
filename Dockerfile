@@ -5,6 +5,7 @@ RUN apt update && apt install -y \
         build-essential \
         cmake \
         git \
+        indent \
         libcurl4-openssl-dev \
         libjansson-dev \
         libssl-dev \
