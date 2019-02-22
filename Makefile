@@ -13,7 +13,7 @@ all: libnss_aad
 
 libnss_aad: $(NSS_SRC)
 	${CC} ${CFLAGS} ${LDFLAGS} -fPIC -fno-stack-protector -Wall -shared -Wl,--export-dynamic \
-		-o libnss_aad.so.2 -Wl,-soname,libnss_aad.so.2 libnss_aad.c -lcjson -lcurl -lm
+		-o libnss_aad.so.2 -Wl,-soname,libnss_aad.so.2 libnss_aad.c -lcjson -lcurl -lm -lsds
 check:
 	@CFLAGS="${CFLAGS} -Wextra -Werror -Wno-sign-compare -fsyntax-only" make
 	@echo "checking for errors... OK"
