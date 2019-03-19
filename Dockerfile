@@ -2,12 +2,15 @@ FROM debian:9.7
 
 RUN apt update && apt install -y \
         automake \
+        autopoint \
         build-essential \
         cmake \
         git \
         indent \
         libcurl4-openssl-dev \
         libjansson-dev \
+        libpam0g-dev \
+        libsodium-dev \
         libssl-dev \
         libtool \
         pkg-config
@@ -37,4 +40,5 @@ RUN git clone https://github.com/antirez/sds libsds && \
 
 WORKDIR /usr/src/libnss_aad
 COPY . /usr/src/libnss_aad
-RUN make
+RUN make depends && \
+    LIB_DIR=/lib/x86_64-linux-gnu make -e install
