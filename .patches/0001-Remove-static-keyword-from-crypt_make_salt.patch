@@ -1,0 +1,26 @@
+From 64aa1009a3bb00c6a0b98a8a0dea8a02646e4663 Mon Sep 17 00:00:00 2001
+From: Lucas Ramage <lramage@cyberninjas.com>
+Date: Thu, 21 Mar 2019 10:26:57 -0400
+Subject: [PATCH 1/1] Remove static keyword from crypt_make_salt
+
+Function is defined as external in libnss_aad
+---
+ modules/pam_unix/passverify.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules/pam_unix/passverify.c b/modules/pam_unix/passverify.c
+index 9c1771e..305bf6e 100644
+--- a/modules/pam_unix/passverify.c
++++ b/modules/pam_unix/passverify.c
+@@ -314,7 +314,7 @@ i64c(int i)
+ }
+ 
+ /* <where> must point to a buffer of at least <length>+1 length */
+-static void
++void
+ crypt_make_salt(char *where, int length)
+ {
+         struct timeval tv;
+-- 
+2.11.0
+

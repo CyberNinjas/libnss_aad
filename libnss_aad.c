@@ -1,22 +1,36 @@
+#include <cjson/cJSON.h>
+#include <crypt.h>
+#include <curl/curl.h>
 #include <grp.h>
+#include <inttypes.h>
 #include <nss.h>
 #include <pwd.h>
+#include <sds/sds.h>
 #include <shadow.h>
+#include <sodium.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bigcrypt.h"
 
-#include <curl/curl.h>
-#include <cjson/cJSON.h>
-#include <sds/sds.h>
-
-#define MIN_UID 1000
-#define MIN_GID 1000
 #define CONF_FILE "/etc/libnss-aad.conf"
+#define MAX_PASSWD_LENGTH 32
+#define MIN_GID 1000
+#define MIN_UID 1000
+#define PASSWD_FILE "/etc/passwd"
 #define RESOURCE_ID "00000002-0000-0000-c000-000000000000"
+#define SHADOW_FILE "/etc/shadow"
 #define SHELL "/bin/sh"
 #define USER_AGENT "libnss_aad/1.0"
 #define USER_FIELD "mailNickname"
+
+extern void crypt_make_salt(char *where, int length);
+
+struct charset {
+    char const *const c;
+    uint32_t const l;
+};
 
 struct response {
     char *data;
@@ -76,6 +90,81 @@ static char *get_static(char **buffer, size_t * buflen, int len)
     *buflen -= len;
 
     return result;
+}
+
+static char *generate_passwd(void)
+{
+    if (sodium_init() < 0) {
+	fprintf(stderr, "libsodium could not be initialized\n");
+	return NULL;
+    }
+
+    uintmax_t const length = MAX_PASSWD_LENGTH;
+
+    struct charset lower = {
+	"abcdefghijklmnopqrstuvwxyz",
+	(uint32_t) strlen(lower.c)
+    };
+
+    struct charset numeric = {
+	"0123456789",
+	(uint32_t) strlen(numeric.c)
+    };
+
+    struct charset special = {
+	"!@#$%^&*()-_=+`~[]{}\\|;:'\",.<>/?",
+	(uint32_t) strlen(special.c)
+    };
+
+    struct charset upper = {
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	(uint32_t) strlen(upper.c)
+    };
+
+    uint32_t const chars_l = lower.l + numeric.l + special.l + upper.l;
+
+    char *const chars = malloc(chars_l + 1);
+
+    if (chars == NULL) {
+	fprintf(stderr, "failed to allocate memory for string\n");
+	return NULL;
+    }
+
+    chars[0] = '\0';
+
+    char *endptr = chars;
+
+    char *passwd = (char *) malloc((length + 1) * sizeof(char));
+
+    if (passwd == NULL) {
+	fprintf(stderr, "failed to allocate memory for string\n");
+	return NULL;
+    }
+
+    memcpy(endptr, lower.c, lower.l);
+    endptr += lower.l;
+
+    memcpy(endptr, numeric.c, numeric.l);
+    endptr += numeric.l;
+
+    memcpy(endptr, special.c, special.l);
+    endptr += special.l;
+
+    memcpy(endptr, upper.c, upper.l);
+
+    for (uintmax_t i = 0; i < length; ++i) {
+	passwd[i] = chars[randombytes_uniform(chars_l)];
+    }
+
+    passwd[length + 1] = '\0';
+
+    free(chars);
+
+    char salt[64];
+
+    crypt_make_salt(salt, 2);	/* TODO See: Modular Crypt Format (MCF) */
+
+    return bigcrypt(passwd, salt);
 }
 
 static cJSON *get_oauth2_token(char *client_id, char *client_secret,
@@ -205,16 +294,24 @@ static int verify_user(cJSON * auth_token, char *domain, const char *name)
 		      name) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
-static int write_passwd_entry(struct passwd *p)
+static int write_entry(const char *fp, void *userp)
 {
-    FILE *fd = fopen("/etc/passwd", "a");
+    int ret = EXIT_FAILURE;
+    FILE *fd = fopen(fp, "a");
     if (fd) {
 	fseek(fd, 0, SEEK_END);
-	putpwent(p, fd);
+	if (strcmp(fp, PASSWD_FILE) == 0) {
+	    struct passwd *p = (struct passwd *) userp;
+	    ret = putpwent(p, fd);
+	}
+
+	if (strcmp(fp, SHADOW_FILE) == 0) {
+	    struct spwd *s = (struct spwd *) userp;
+	    ret = putspent(s, fd);
+	}
 	fclose(fd);
-	return EXIT_SUCCESS;
     }
-    return EXIT_FAILURE;
+    return ret;
 }
 
 enum nss_status _nss_aad_getpwnam_r(const char *name, struct passwd *p,
@@ -306,7 +403,7 @@ enum nss_status _nss_aad_getpwnam_r(const char *name, struct passwd *p,
 
 	strcpy(p->pw_shell, shell);
 
-	write_passwd_entry(p);
+	write_entry(PASSWD_FILE, p);
 
 	return NSS_STATUS_SUCCESS;
     }
@@ -328,11 +425,17 @@ enum nss_status _nss_aad_getspnam_r(const char *name, struct spwd *s,
     strcpy(s->sp_namp, name);
 
     if ((s->sp_pwdp =
-	 get_static(&buffer, &buflen, strlen("*") + 1)) == NULL) {
+	 get_static(&buffer, &buflen, MAX_PASSWD_LENGTH + 1)) == NULL) {
 	return NSS_STATUS_TRYAGAIN;
     }
 
-    strcpy(s->sp_pwdp, "*");
+    char *passwd = generate_passwd();
+    if (passwd == NULL)
+	return NSS_STATUS_TRYAGAIN;
+
+    strcpy(s->sp_pwdp, passwd);
+
+    write_entry(SHADOW_FILE, s);
 
     s->sp_lstchg = 13571;
     s->sp_min = 0;
