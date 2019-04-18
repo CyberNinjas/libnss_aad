@@ -7,3 +7,4 @@ services:
 
 script:
   - docker build . -t cyberninjas/libnss_aad
+  - docker build . -t cyberninjas/libnss_aad:ami -f Dockerfile.ami
