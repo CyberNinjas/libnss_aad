@@ -7,6 +7,7 @@ RUN echo "deb http://http.us.debian.org/debian sid main" \
         autopoint \
         build-essential \
         cmake \
+        curl \
         git \
         indent \
         libcjson-dev \
