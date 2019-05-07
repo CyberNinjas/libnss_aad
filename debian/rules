@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	mkdir -p $$(pwd)/usr/lib
+	cp -a libnss_aad.so.2 $$(pwd)/usr/lib
+
+override_dh_auto_clean:
+	$(MAKE) clean
+	rm -rf $$(pwd)/usr
