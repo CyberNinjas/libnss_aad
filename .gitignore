@@ -1,2 +1,7 @@
 libnss_aad.so.2
 *.c~
+# Debian
+debian/*.log
+debian/.*
+debian/files
+debian/libnss-aad*
