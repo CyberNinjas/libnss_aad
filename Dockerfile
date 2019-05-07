@@ -8,6 +8,8 @@ RUN echo "deb http://http.us.debian.org/debian sid main" \
         build-essential \
         cmake \
         curl \
+        debhelper \
+        devscripts \
         git \
         indent \
         libcjson-dev \
@@ -18,7 +20,8 @@ RUN echo "deb http://http.us.debian.org/debian sid main" \
         libsodium-dev \
         libssl-dev \
         libtool \
-        pkg-config
+        pkg-config \
+        quilt
 
 WORKDIR /tmp
 RUN curl -Lo sds_2.0.0.orig.tar.gz \

@@ -5,6 +5,9 @@ RUN apt update && apt install -y \
         autopoint \
         build-essential \
         cmake \
+        curl \
+        debhelper \
+        devscripts \
         git \
         indent \
         libcurl4-openssl-dev \
@@ -14,7 +17,8 @@ RUN apt update && apt install -y \
         libsodium-dev \
         libssl-dev \
         libtool \
-        pkg-config
+        pkg-config \
+        quilt
 
 WORKDIR /tmp
 RUN curl -Lo cjson_1.7.10.orig.tar.gz \
