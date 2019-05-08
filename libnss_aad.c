@@ -1,6 +1,7 @@
 #include <cjson/cJSON.h>
 #include <crypt.h>
 #include <curl/curl.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <inttypes.h>
 #include <nss.h>
@@ -12,7 +13,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bigcrypt.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <xcrypt.h>
 
 #define CONF_FILE "/etc/libnss-aad.conf"
 #define MAX_PASSWD_LENGTH 32
@@ -24,8 +28,6 @@
 #define SHELL "/bin/sh"
 #define USER_AGENT "libnss_aad/1.0"
 #define USER_FIELD "mailNickname"
-
-extern void crypt_make_salt(char *where, int length);
 
 struct charset {
     char const *const c;
@@ -77,7 +79,7 @@ static char *load_file(const char *path)
     return buffer;
 }
 
-static char *get_static(char **buffer, size_t * buflen, int len)
+static char *get_static(char **buffer, size_t *buflen, int len)
 {
     char *result;
 
@@ -160,11 +162,25 @@ static char *generate_passwd(void)
 
     free(chars);
 
-    char salt[64];
+    char entropy[16];
+    int fd;
 
-    crypt_make_salt(salt, 2);	/* TODO See: Modular Crypt Format (MCF) */
+    fd = open("/dev/urandom", O_RDONLY);
 
-    return bigcrypt(passwd, salt);
+    if (fd < 0) {
+	printf("Can't open /dev/urandom\n");
+	return NULL;
+    }
+
+    if (read(fd, entropy, sizeof(entropy)) != sizeof(entropy)) {
+	printf("Not enough entropy\n");
+	return NULL;
+    }
+
+    close(fd);
+
+    return xcrypt(passwd,
+		  xcrypt_gensalt("$2a$", 12, entropy, sizeof(entropy)));
 }
 
 static cJSON *get_oauth2_token(char *client_id, char *client_secret,
