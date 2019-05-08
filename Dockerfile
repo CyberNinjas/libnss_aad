@@ -16,10 +16,10 @@ RUN echo "deb http://http.us.debian.org/debian sid main" \
         libcurl4-openssl-dev \
         libjansson-dev \
         libjwt-dev \
-        libpam0g-dev \
         libsodium-dev \
         libssl-dev \
         libtool \
+        libxcrypt-dev \
         pkg-config \
         quilt
 
@@ -35,5 +35,5 @@ RUN curl -Lo sds_2.0.0.orig.tar.gz \
 WORKDIR /usr/src/libnss_aad
 COPY . /usr/src/libnss_aad
 RUN tar cvzf ../libnss-aad_0.0.2.orig.tar.gz --exclude='.git*' . && \
-    debuild -us -uc -i'(.git|linux-pam)' && \
+    debuild -us -uc -i'.git' && \
     dpkg -i ../libnss-aad_0.0.2-1_amd64.deb

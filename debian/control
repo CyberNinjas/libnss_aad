@@ -6,14 +6,14 @@ Standards-Version: 3.9.8
 Build-Depends:
  debhelper (>=9), libtool,
  libcurl4-openssl-dev, libjansson-dev, libjwt-dev,
- libpam0g-dev, libsds-dev, libsodium-dev, libssl-dev
+ libsds-dev, libsodium-dev, libssl-dev, libxcrypt-dev
 Vcs-Git: https://github.com/CyberNinjas/libnss_aad.git
 Vcs-Browser: https://github.com/CyberNinjas/libnss_aad
 Homepage: https://github.com/CyberNinjas/libnss_aad
 
 Package: libnss-aad
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-runtime (>= 1.0.1-6)
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: nss module for Azure Active Directory
  Name Service Switch (NSS) Module for performing user lookups against the Azure Active Directory (AAD).
  .
