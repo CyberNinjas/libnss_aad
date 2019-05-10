@@ -1,10 +1,15 @@
 language: c
-
 sudo: required
-
 services:
-  - docker
-
+- docker
 script:
-  - docker build . -t cyberninjas/libnss_aad
-  - docker build . -t cyberninjas/libnss_aad:ubuntu-18.04 -f Dockerfile.ubuntu-18.04
+- docker build . -t cyberninjas/libnss_aad
+- docker build . -t cyberninjas/libnss_aad:ubuntu-18.04 -f Dockerfile.ubuntu-18.04
+- docker run -v $(pwd):/usr/src/libnss_aad cyberninjas/libnss_aad /bin/sh -c "cp /usr/src/*.deb /usr/src/libnss_aad"
+deploy:
+  provider: bintray
+  file: .bintray.json
+  user: jnchi
+  key:
+    secure: NIVuai30a669P6BtUtgJvXVKuRbk/oPDhYn3pF0PEIXqZA3gXK8s2Xlh/IwE5b5N7kmsdC78SqCQkxj7PVWlRoRkSq/iT53DZWafqzmSyJMkJtgZmcw5fpIXFTcdSLSy8sOwSGSnfMVSmokt64FyER3kUkvfumpFpSRBQWTe2vYY7xuMU4tHH4GFwDFImBac/4rKm920o1fMdegzhSWl4ul/wMGQ6EAkF7Ms3ElN0qXorfe/QHvH4l0g847pHakNiBfHnI16ld03R5UOgNsDvIOUK9FsUjnUwPorRfMmJNfyNUv3eW3Ck9/ffXRBPEhToliTobW+YOMMOTqxVNZxwVjXfrMGpNDzJwdfEpQ5D8lYAjDqwp7nY39WFkpYM1rtr/cGn85S9ullZEEYz3uq7Wcky0RXJA8pf1+pOes5Q4E/WrFu9skVXy2nqc3Bqd/AaIfXbVzqfiNLiwarZNMoY/8xPeZEzQggK62nAvReEVy/bp7qSpxi5ZJYzeslpfJpz10iO5eM0jFQWUN5SyTYKlYvcGtIdzBupojSrNsHL/6p4xQUIGNXmL0Ltr2MzOEaMTtb5vAuK4idPQpq4js2LWtwY96cKpPmqgx4uMjGkTBhENiSYJ0GwHClIKn2GyaLwva21NUXtcqxVtDHHkEKrZLFAgkCkMLWHIikaIfnaRM=
+  skip_cleanup: true
