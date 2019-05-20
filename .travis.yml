@@ -5,6 +5,7 @@ services:
 script:
 - docker build . -t cyberninjas/libnss_aad
 - docker build . -t cyberninjas/libnss_aad:ubuntu-18.04 -f Dockerfile.ubuntu-18.04
+- docker run -v $(pwd):/usr/src/libnss_aad cyberninjas/libnss_aad /bin/sh -c "lesspipe /usr/src/*.deb"
 - docker run -v $(pwd):/usr/src/libnss_aad cyberninjas/libnss_aad /bin/sh -c "cp /usr/src/*.deb /usr/src/libnss_aad"
 deploy:
   provider: bintray
