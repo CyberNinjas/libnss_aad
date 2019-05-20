@@ -1,4 +1,5 @@
 libnss_aad.so.2
+test/dlopentest
 *.c~
 # Debian
 debian/*.log
