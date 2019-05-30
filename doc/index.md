@@ -19,7 +19,7 @@ make
 4) Install:
 
 ```terminal
-cp libnss_aad.so.2 /lib/x86_64-linux-gnu/
+sudo make install
 ```
 
 ## Configuration
@@ -76,13 +76,13 @@ cp libnss_aad.so.2 /lib/x86_64-linux-gnu/
 }
 ```
 
-**NOTE: For now, `client_secret` must be base64-encoded.**
+**NOTE: For now, `client.secret` must be base64-encoded.**
 
 `/etc/nsswitch.conf`
 
 ```
 passwd:         compat aad
-group:          compat
+group:          compat aad
 shadow:         compat aad
 ```
 
