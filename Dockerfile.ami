@@ -17,11 +17,6 @@ RUN git clone https://github.com/benmcollins/libjwt && \
     cd libjwt && git checkout tags/v1.10.1 && \
     autoreconf -i && ./configure && make && make install
 
-WORKDIR /tmp
-RUN git clone https://github.com/DaveGamble/cJSON libcjson && \
-    cd libcjson && git checkout tags/v1.7.10 && \
-    mkdir build && cd build && cmake .. && make && make install
-
 # See: https://github.com/antirez/sds/issues/97
 WORKDIR /tmp
 RUN git clone https://github.com/antirez/sds libsds && \

@@ -4,9 +4,9 @@ Section: admin
 Priority: optional
 Standards-Version: 3.9.8
 Build-Depends:
- debhelper (>=9), libtool, libcjson-dev,
- libcurl4-openssl-dev, libjansson-dev, libjwt-dev,
- libsds-dev, libsodium-dev, libssl-dev, libxcrypt-dev
+ debhelper (>=9), libtool, libcurl4-openssl-dev, 
+ libjansson-dev, libjwt-dev, libsds-dev, libsodium-dev,
+ libssl-dev, libxcrypt-dev
 Vcs-Git: https://github.com/CyberNinjas/libnss_aad.git
 Vcs-Browser: https://github.com/CyberNinjas/libnss_aad
 Homepage: https://github.com/CyberNinjas/libnss_aad

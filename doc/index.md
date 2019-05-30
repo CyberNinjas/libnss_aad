@@ -72,7 +72,8 @@ sudo make install
   "user": {
     "group": "users",
     "shell": "/bin/bash"
-  }
+  },
+  "debug": true # to optionally enable debugging mode
 }
 ```
 

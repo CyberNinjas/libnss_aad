@@ -1,9 +1,9 @@
-#include <cjson/cJSON.h>
 #include <crypt.h>
 #include <curl/curl.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <inttypes.h>
+#include <jansson.h>
 #include <nss.h>
 #include <pwd.h>
 #include <sds/sds.h>
@@ -40,16 +40,16 @@ struct response {
 };
 
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
-				void *userp)
+                                void *userp)
 {
     size_t realsize = size * nmemb;
     struct response *resp = (struct response *) userp;
 
     char *ptr = realloc(resp->data, resp->size + realsize + 1);
     if (ptr == NULL) {
-	/* out of memory! */
-	printf("not enough memory (realloc returned NULL)\n");
-	return 0;
+        /* out of memory! */
+        printf("not enough memory (realloc returned NULL)\n");
+        return 0;
     }
 
     resp->data = ptr;
@@ -66,14 +66,14 @@ static char *load_file(const char *path)
     long length;
     FILE *fd = fopen(path, "rb");
     if (fd) {
-	fseek(fd, 0, SEEK_END);
-	length = ftell(fd);
-	fseek(fd, 0, SEEK_SET);
-	buffer = (char *) malloc((length + 1) * sizeof(char));
-	if (buffer) {
-	    fread(buffer, sizeof(char), length, fd);
-	}
-	fclose(fd);
+        fseek(fd, 0, SEEK_END);
+        length = ftell(fd);
+        fseek(fd, 0, SEEK_SET);
+        buffer = (char *) malloc((length + 1) * sizeof(char));
+        if (buffer) {
+            fread(buffer, sizeof(char), length, fd);
+        }
+        fclose(fd);
     }
     buffer[length] = '\0';
     return buffer;
@@ -84,7 +84,7 @@ static char *get_static(char **buffer, size_t *buflen, int len)
     char *result;
 
     if ((buffer == NULL) || (buflen == NULL) || (*buflen < len)) {
-	return NULL;
+        return NULL;
     }
 
     result = *buffer;
@@ -97,30 +97,30 @@ static char *get_static(char **buffer, size_t *buflen, int len)
 static char *generate_passwd(void)
 {
     if (sodium_init() < 0) {
-	fprintf(stderr, "libsodium could not be initialized\n");
-	return NULL;
+        fprintf(stderr, "libsodium could not be initialized\n");
+        return NULL;
     }
 
     uintmax_t const length = MAX_PASSWD_LENGTH;
 
     struct charset lower = {
-	"abcdefghijklmnopqrstuvwxyz",
-	(uint32_t) strlen(lower.c)
+        "abcdefghijklmnopqrstuvwxyz",
+        (uint32_t) strlen(lower.c)
     };
 
     struct charset numeric = {
-	"0123456789",
-	(uint32_t) strlen(numeric.c)
+        "0123456789",
+        (uint32_t) strlen(numeric.c)
     };
 
     struct charset special = {
-	"!@#$%^&*()-_=+`~[]{}\\|;:'\",.<>/?",
-	(uint32_t) strlen(special.c)
+        "!@#$%^&*()-_=+`~[]{}\\|;:'\",.<>/?",
+        (uint32_t) strlen(special.c)
     };
 
     struct charset upper = {
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-	(uint32_t) strlen(upper.c)
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        (uint32_t) strlen(upper.c)
     };
 
     uint32_t const chars_l = lower.l + numeric.l + special.l + upper.l;
@@ -128,8 +128,8 @@ static char *generate_passwd(void)
     char *const chars = malloc(chars_l + 1);
 
     if (chars == NULL) {
-	fprintf(stderr, "failed to allocate memory for string\n");
-	return NULL;
+        fprintf(stderr, "failed to allocate memory for string\n");
+        return NULL;
     }
 
     chars[0] = '\0';
@@ -139,8 +139,8 @@ static char *generate_passwd(void)
     char *passwd = (char *) malloc((length + 1) * sizeof(char));
 
     if (passwd == NULL) {
-	fprintf(stderr, "failed to allocate memory for string\n");
-	return NULL;
+        fprintf(stderr, "failed to allocate memory for string\n");
+        return NULL;
     }
 
     memcpy(endptr, lower.c, lower.l);
@@ -155,7 +155,7 @@ static char *generate_passwd(void)
     memcpy(endptr, upper.c, upper.l);
 
     for (uintmax_t i = 0; i < length; ++i) {
-	passwd[i] = chars[randombytes_uniform(chars_l)];
+        passwd[i] = chars[randombytes_uniform(chars_l)];
     }
 
     passwd[length + 1] = '\0';
@@ -168,27 +168,29 @@ static char *generate_passwd(void)
     fd = open("/dev/urandom", O_RDONLY);
 
     if (fd < 0) {
-	printf("Can't open /dev/urandom\n");
-	return NULL;
+        printf("Can't open /dev/urandom\n");
+        return NULL;
     }
 
     if (read(fd, entropy, sizeof(entropy)) != sizeof(entropy)) {
-	printf("Not enough entropy\n");
-	return NULL;
+        printf("Not enough entropy\n");
+        return NULL;
     }
 
     close(fd);
 
     return xcrypt(passwd,
-		  xcrypt_gensalt("$2a$", 12, entropy, sizeof(entropy)));
+                  xcrypt_gensalt("$2a$", 12, entropy, sizeof(entropy)));
 }
 
-static cJSON *get_oauth2_token(char *client_id, char *client_secret,
-			       char *domain)
+static json_t *get_oauth2_token(const char *client_id,
+                                const char *client_secret,
+                                const char *domain, bool debug)
 {
     CURL *curl_handle;
     CURLcode res;
-    cJSON *token_data, *token;
+    json_t *token_data, *token;
+    json_error_t error;
     struct response resp;
 
     resp.data = malloc(1);
@@ -210,26 +212,26 @@ static cJSON *get_oauth2_token(char *client_id, char *client_secret,
     curl_easy_setopt(curl_handle, CURLOPT_URL, endpoint);
     curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, post_body);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION,
-		     response_callback);
+                     response_callback);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *) &resp);
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, USER_AGENT);
 
-    /* https://curl.haxx.se/libcurl/c/CURLOPT_VERBOSE.html */
-    //curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
+    if (debug)
+        curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
 
     res = curl_easy_perform(curl_handle);
 
     /* check for errors */
     if (res != CURLE_OK) {
-	fprintf(stderr, "curl_easy_perform() failed: %s\n",
-		curl_easy_strerror(res));
+        fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                curl_easy_strerror(res));
     } else {
-	token_data = cJSON_Parse(resp.data);
+        token_data = json_loads(resp.data, 0, &error);
 
-	if (token_data == NULL) {
-	    fprintf(stderr, "cJSON_Parse() failed\n");
-	    return NULL;
-	}
+        if (!token_data) {
+            fprintf(stderr, "json_loads() failed: %s\n", error.text);
+            return NULL;
+        }
     }
 
     curl_easy_cleanup(curl_handle);
@@ -237,25 +239,27 @@ static cJSON *get_oauth2_token(char *client_id, char *client_secret,
     sdsfree(post_body);
     free(resp.data);
 
-    token = cJSON_GetObjectItem(token_data, "access_token");
+    token = json_object_get(token_data, "access_token");
     return (token) ? token : NULL;
 }
 
-static int verify_user(cJSON * auth_token, char *domain, const char *name)
+static int verify_user(json_t * auth_token, const char *domain,
+                       const char *name, bool debug)
 {
     CURL *curl_handle;
     CURLcode res;
-    cJSON *user_data;
+    json_t *user_data;
+    json_error_t error;
     sds auth_header = sdsnew("Authorization: Bearer ");
     sds endpoint = sdsnew("https://graph.windows.net/");
     struct response resp;
     struct curl_slist *headers = NULL;
-    char *user_field;
+    const char *user_field;
 
     resp.data = malloc(1);
     resp.size = 0;
 
-    auth_header = sdscat(auth_header, auth_token->valuestring);
+    auth_header = sdscat(auth_header, json_string_value(auth_token));
     headers = curl_slist_append(headers, auth_header);
 
     /* https://graph.windows.net/<domain>/users/<username>@<domain>?api-version=1.6 */
@@ -270,32 +274,32 @@ static int verify_user(cJSON * auth_token, char *domain, const char *name)
     curl_easy_setopt(curl_handle, CURLOPT_URL, endpoint);
     curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION,
-		     response_callback);
+                     response_callback);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *) &resp);
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, USER_AGENT);
     curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1L);
 
-    /* https://curl.haxx.se/libcurl/c/CURLOPT_VERBOSE.html */
-    //curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
+    if (debug)
+        curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
 
     res = curl_easy_perform(curl_handle);
 
 
     if (res != CURLE_OK) {
-	fprintf(stderr, "curl_easy_perform() failed: %s\n",
-		curl_easy_strerror(res));
+        fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                curl_easy_strerror(res));
     } else {
-	user_data = cJSON_Parse(resp.data);
+        user_data = json_loads(resp.data, 0, &error);
 
-	if (user_data == NULL) {
-	    fprintf(stderr, "cJSON_Parse() failed\n");
-	    return EXIT_FAILURE;
-	}
+        if (!user_data) {
+            fprintf(stderr, "json_loads() failed: %s\n", error.text);
+            return EXIT_FAILURE;
+        }
 
-	if (cJSON_GetObjectItem(user_data, "odata.error") != NULL) {
-	    fprintf(stderr, "returned odata.error\n");
-	    return EXIT_FAILURE;
-	}
+        if (json_object_get(user_data, "odata.error")) {
+            fprintf(stderr, "returned odata.error\n");
+            return EXIT_FAILURE;
+        }
     }
 
     curl_easy_cleanup(curl_handle);
@@ -304,10 +308,10 @@ static int verify_user(cJSON * auth_token, char *domain, const char *name)
     sdsfree(endpoint);
     free(resp.data);
 
-    user_field = cJSON_GetObjectItem(user_data, USER_FIELD)->valuestring;
+    user_field = json_string_value(json_object_get(user_data, USER_FIELD));
     return (user_field
-	    && strcmp(user_field,
-		      name) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+            && strcmp(user_field,
+                      name) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 static int write_entry(const char *fp, void *userp)
@@ -315,139 +319,193 @@ static int write_entry(const char *fp, void *userp)
     int ret = EXIT_FAILURE;
     FILE *fd = fopen(fp, "a");
     if (fd) {
-	fseek(fd, 0, SEEK_END);
-	if (strcmp(fp, PASSWD_FILE) == 0) {
-	    struct passwd *p = (struct passwd *) userp;
-	    ret = putpwent(p, fd);
-	}
+        fseek(fd, 0, SEEK_END);
+        if (strcmp(fp, PASSWD_FILE) == 0) {
+            struct passwd *p = (struct passwd *) userp;
+            ret = putpwent(p, fd);
+        }
 
-	if (strcmp(fp, SHADOW_FILE) == 0) {
-	    struct spwd *s = (struct spwd *) userp;
-	    ret = putspent(s, fd);
-	}
-	fclose(fd);
+        if (strcmp(fp, SHADOW_FILE) == 0) {
+            struct spwd *s = (struct spwd *) userp;
+            ret = putspent(s, fd);
+        }
+        fclose(fd);
     }
     return ret;
 }
 
 enum nss_status _nss_aad_getpwnam_r(const char *name, struct passwd *p,
-				    char *buffer, size_t buflen,
-				    int *errnop)
+                                    char *buffer, size_t buflen,
+                                    int *errnop)
 {
-    char *config_file, *domain, *shell;
-    cJSON *config, *client, *shell_cfg, *token, *user_cfg;
+    bool debug = false;
+    const char *client_id, *client_secret, *config_file, *domain, *shell;
+    json_t *config, *client, *shell_cfg, *token, *user_cfg;
+    json_error_t error;
     int ret = 0, user_id = MIN_UID;
     sds home_dir = sdsnew("/home/");
     struct group *group;
     struct passwd *user;
 
-    (void) (errnop);		/* unused-parameter */
+    (void) (errnop);            /* unused-parameter */
 
     config_file = load_file(CONF_FILE);
     if (config_file == NULL) {
-	return NSS_STATUS_NOTFOUND;
+        return NSS_STATUS_NOTFOUND;
     }
 
-    config = cJSON_Parse(config_file);
-    if (config == NULL) {
-	return NSS_STATUS_NOTFOUND;
+    config = json_loads(config_file, 0, &error);
+    if (!config) {
+        fprintf(stderr, "error in config on line %d: %s\n", error.line,
+                error.text);
+        return NSS_STATUS_NOTFOUND;
     }
 
-    client = cJSON_GetObjectItem(config, "client");
+    if (json_object_get(config, "debug"))
+        if (strcmp
+            (json_string_value(json_object_get(config, "debug")),
+             "true") == 0)
+            debug = true;
 
-    domain = cJSON_GetObjectItem(config, "domain")->valuestring;
+    if (json_object_get(config, "client")) {
+        client = json_object_get(config, "client");
+    } else {
+        fprintf(stderr, "error with Client in JSON\n");
+        return ret;
+    }
 
-    user_cfg = cJSON_GetObjectItem(config, "user");
+    if (json_object_get(client, "id")) {
+        client_id = json_string_value(json_object_get(client, "id"));
+    } else {
+        fprintf(stderr, "error with Client ID in JSON\n");
+        return ret;
+    }
+
+    if (json_object_get(client, "secret")) {
+        client_secret =
+            json_string_value(json_object_get(client, "secret"));
+    } else {
+        fprintf(stderr, "error with Client Secret in JSON\n");
+        return ret;
+    }
+
+    if (json_object_get(config, "domain")) {
+        domain = json_string_value(json_object_get(config, "domain"));
+    } else {
+        fprintf(stderr, "error with Domain in JSON\n");
+        return ret;
+    }
+
+    if (json_object_get(config, "user")) {
+        user_cfg = json_object_get(config, "user");
+    } else {
+        fprintf(stderr, "error with User in JSON\n");
+        return ret;
+    }
 
     user = getpwuid(user_id);
 
-    group = getgrnam(cJSON_GetObjectItem(user_cfg, "group")->valuestring);
+    if (json_object_get(user_cfg, "group")) {
+        group =
+            getgrnam(json_string_value
+                     (json_object_get(user_cfg, "group")));
+    } else {
+        fprintf(stderr, "error with Group in JSON\n");
+        return ret;
+    }
 
-    shell_cfg = cJSON_GetObjectItem(user_cfg, "shell");
+    if (json_object_get(user_cfg, "shell")) {
+        shell_cfg = json_object_get(user_cfg, "shell");
+    }
 
-    shell = (shell_cfg) ? shell_cfg->valuestring : sdsnew(SHELL);
+    shell = (shell_cfg) ? json_string_value(shell_cfg) : sdsnew(SHELL);
+    if (!shell) {
+        fprintf(stderr, "error with Shell in JSON\n");
+        return ret;
+    }
 
     home_dir = sdscat(home_dir, name);
+    if (!home_dir) {
+        fprintf(stderr, "error with HOME directory\n");
+        return ret;
+    }
 
     curl_global_init(CURL_GLOBAL_ALL);
 
-    token =
-	get_oauth2_token(cJSON_GetObjectItem(client, "id")->valuestring,
-			 cJSON_GetObjectItem(client,
-					     "secret")->valuestring,
-			 domain);
+    token = get_oauth2_token(client_id, client_secret, domain, debug);
 
-    ret = verify_user(token, domain, name);
+    ret = verify_user(token, domain, name, debug);
 
     curl_global_cleanup();
 
     if (!ret) {
-	if ((p->pw_name =
-	     get_static(&buffer, &buflen, strlen(name) + 1)) == NULL)
-	    return NSS_STATUS_TRYAGAIN;
+        if ((p->pw_name =
+             get_static(&buffer, &buflen, strlen(name) + 1)) == NULL)
+            return NSS_STATUS_TRYAGAIN;
 
-	strcpy(p->pw_name, name);
+        strcpy(p->pw_name, name);
 
-	if ((p->pw_passwd =
-	     get_static(&buffer, &buflen, strlen("x") + 1)) == NULL)
-	    return NSS_STATUS_TRYAGAIN;
+        if ((p->pw_passwd =
+             get_static(&buffer, &buflen, strlen("x") + 1)) == NULL)
+            return NSS_STATUS_TRYAGAIN;
 
-	strcpy(p->pw_passwd, "x");
+        strcpy(p->pw_passwd, "x");
 
-	while (user != NULL) {
-	    user = getpwuid(++user_id);
-	}
-	p->pw_uid = user_id;
+        while (user != NULL) {
+            user = getpwuid(++user_id);
+        }
+        p->pw_uid = user_id;
 
-	p->pw_gid = (group) ? group->gr_gid : MIN_GID;
+        p->pw_gid = (group) ? group->gr_gid : MIN_GID;
 
-	if ((p->pw_gecos =
-	     get_static(&buffer, &buflen, strlen("\0") + 1)) == NULL)
-	    return NSS_STATUS_TRYAGAIN;
+        if ((p->pw_gecos =
+             get_static(&buffer, &buflen, strlen("\0") + 1)) == NULL)
+            return NSS_STATUS_TRYAGAIN;
 
-	strcpy(p->pw_gecos, "\0");
+        strcpy(p->pw_gecos, "\0");
 
-	if ((p->pw_dir =
-	     get_static(&buffer, &buflen, strlen(home_dir) + 1)) == NULL)
-	    return NSS_STATUS_TRYAGAIN;
+        if ((p->pw_dir =
+             get_static(&buffer, &buflen, strlen(home_dir) + 1)) == NULL)
+            return NSS_STATUS_TRYAGAIN;
 
-	strcpy(p->pw_dir, home_dir);
+        strcpy(p->pw_dir, home_dir);
 
-	if ((p->pw_shell =
-	     get_static(&buffer, &buflen, strlen(shell) + 1)) == NULL)
-	    return NSS_STATUS_TRYAGAIN;
+        if ((p->pw_shell =
+             get_static(&buffer, &buflen, strlen(shell) + 1)) == NULL)
+            return NSS_STATUS_TRYAGAIN;
 
-	strcpy(p->pw_shell, shell);
+        strcpy(p->pw_shell, shell);
 
-	write_entry(PASSWD_FILE, p);
+        write_entry(PASSWD_FILE, p);
 
-	return NSS_STATUS_SUCCESS;
+        return NSS_STATUS_SUCCESS;
     }
+
     return NSS_STATUS_TRYAGAIN;
 }
 
 enum nss_status _nss_aad_getspnam_r(const char *name, struct spwd *s,
-				    char *buffer, size_t buflen,
-				    int *errnop)
+                                    char *buffer, size_t buflen,
+                                    int *errnop)
 {
-    (void) (errnop);		/* unused-parameter */
+    (void) (errnop);            /* unused-parameter */
 
     /* If out of memory */
     if ((s->sp_namp =
-	 get_static(&buffer, &buflen, strlen(name) + 1)) == NULL) {
-	return NSS_STATUS_TRYAGAIN;
+         get_static(&buffer, &buflen, strlen(name) + 1)) == NULL) {
+        return NSS_STATUS_TRYAGAIN;
     }
 
     strcpy(s->sp_namp, name);
 
     if ((s->sp_pwdp =
-	 get_static(&buffer, &buflen, MAX_PASSWD_LENGTH + 1)) == NULL) {
-	return NSS_STATUS_TRYAGAIN;
+         get_static(&buffer, &buflen, MAX_PASSWD_LENGTH + 1)) == NULL) {
+        return NSS_STATUS_TRYAGAIN;
     }
 
     char *passwd = generate_passwd();
     if (passwd == NULL)
-	return NSS_STATUS_TRYAGAIN;
+        return NSS_STATUS_TRYAGAIN;
 
     strcpy(s->sp_pwdp, passwd);
 

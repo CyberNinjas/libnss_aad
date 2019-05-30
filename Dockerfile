@@ -12,7 +12,6 @@ RUN echo "deb http://http.us.debian.org/debian sid main" \
         devscripts \
         git \
         indent \
-        libcjson-dev \
         libcurl4-openssl-dev \
         libjansson-dev \
         libjwt-dev \
