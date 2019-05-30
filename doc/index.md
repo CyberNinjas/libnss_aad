@@ -82,7 +82,7 @@ sudo make install
 
 ```
 passwd:         compat aad
-group:          compat aad
+group:          compat
 shadow:         compat aad
 ```
 
