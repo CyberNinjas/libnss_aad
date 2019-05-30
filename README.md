@@ -40,7 +40,7 @@ Create the file `/etc/libnss-aad.conf` and fill it with:
 }
 ```
 
-**NOTE: For now, `client.secret` must be base64-encoded.**
+**NOTE: For now, `client.secret` must be URL-encoded.**
 
 ## Current behavior
 

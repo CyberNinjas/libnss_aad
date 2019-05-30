@@ -76,7 +76,7 @@ sudo make install
 }
 ```
 
-**NOTE: For now, `client.secret` must be base64-encoded.**
+**NOTE: For now, `client.secret` must be URL-encoded.**
 
 `/etc/nsswitch.conf`
 
