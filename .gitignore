@@ -6,3 +6,4 @@ debian/*.log
 debian/.*
 debian/files
 debian/libnss-aad*
+*.deb
