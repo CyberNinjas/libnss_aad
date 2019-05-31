@@ -1,4 +1,4 @@
-# libnss_aad [![Build Status][travis-badge]][travis-url] [![GPL-3.0-or-later][gpl-badge]][gpl-license]
+# libnss_aad [![Build Status][travis-badge]][travis-url] [![GPL-3.0-or-later][gpl-badge]][gpl-license] [![Download](https://api.bintray.com/packages/jnchi/aad/libnss-aad/images/download.svg) ](https://bintray.com/jnchi/aad/libnss-aad/_latestVersion)
 
 _Name Service Switch (NSS) Module for performing user lookups against the Azure Active Directory (AAD)._
 
