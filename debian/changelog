@@ -1,3 +1,9 @@
+libnss-aad (0.0.3-1) UNRELEASED; urgency=medium
+
+  * New release.
+
+ -- Lucas Ramage <lramage@cyberninjas.com>  Fri, 31 May 2019 16:19:23 +0000
+
 libnss-aad (0.0.2-1) UNRELEASED; urgency=medium
 
   * Initial release.
