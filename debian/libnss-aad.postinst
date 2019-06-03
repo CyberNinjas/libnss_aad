@@ -29,11 +29,23 @@ insert_nss_entry() {
     ' /etc/nsswitch.conf
 }
 
+fix_config_permissions() {
+    echo "Fixing configuration permissions..."
+    # abort if /etc/libnss-aad.conf does not exist
+    if ! [ -e /etc/libnss-aad.conf ]; then
+        echo "Could not find /etc/libnss-aad.conf."
+        return
+    fi
+
+    chmod 600 /etc/libnss-aad.conf
+}
+
 if [ "$1" = configure ]; then
     if [ -z "$2" ]; then
         echo "First installation detected..."
         # first install: setup the recommended configuration
         insert_nss_entry
+        fix_config_permissions
     fi
 fi
 

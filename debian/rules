@@ -9,7 +9,4 @@ override_dh_auto_install:
 override_dh_auto_clean:
 	$(MAKE) clean
 	rm -rf $$(pwd)/usr
-	
-override_dh_fixperms:
-        dh_fixperms
-        chmod 600 /etc/libnss-aad.conf
+
