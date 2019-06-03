@@ -60,25 +60,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
     return realsize;
 }
 
-static char *load_file(const char *path)
-{
-    char *buffer;
-    long length;
-    FILE *fd = fopen(path, "rb");
-    if (fd) {
-        fseek(fd, 0, SEEK_END);
-        length = ftell(fd);
-        fseek(fd, 0, SEEK_SET);
-        buffer = (char *) malloc((length + 1) * sizeof(char));
-        if (buffer) {
-            fread(buffer, sizeof(char), length, fd);
-        }
-        fclose(fd);
-    }
-    buffer[length] = '\0';
-    return buffer;
-}
-
 static char *get_static(char **buffer, size_t *buflen, int len)
 {
     char *result;
@@ -339,7 +320,7 @@ enum nss_status _nss_aad_getpwnam_r(const char *name, struct passwd *p,
                                     int *errnop)
 {
     bool debug = false;
-    const char *client_id, *client_secret, *config_file, *domain, *shell;
+    const char *client_id, *client_secret, *domain, *shell;
     json_t *config, *client, *shell_cfg, *token, *user_cfg;
     json_error_t error;
     int ret = 0, user_id = MIN_UID;
@@ -349,12 +330,7 @@ enum nss_status _nss_aad_getpwnam_r(const char *name, struct passwd *p,
 
     (void) (errnop);            /* unused-parameter */
 
-    config_file = load_file(CONF_FILE);
-    if (config_file == NULL) {
-        return NSS_STATUS_NOTFOUND;
-    }
-
-    config = json_loads(config_file, 0, &error);
+    config = json_load_file(CONF_FILE, 0, &error);
     if (!config) {
         fprintf(stderr, "error in config on line %d: %s\n", error.line,
                 error.text);
