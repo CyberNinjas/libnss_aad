@@ -25,6 +25,12 @@ Note: __Both__ PPA's must be installed in order for all of the dependencies to b
 apt update && apt install -y libnss-aad
 ```
 
+## Configuration
+
+The package provided should automatically install the following configuration file:
+
+- [`/etc/libnss-aad.conf`](../debian/libnss-aad.conf)
+
 ## Troubleshooting
 
 If `add-apt-repository` is missing from your system, i.e., a docker image,
