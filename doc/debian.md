@@ -24,6 +24,12 @@ echo "deb https://dl.bintray.com/jnchi/aad unstable main" | tee -a /etc/apt/sour
 apt update && apt install -y libnss-aad
 ```
 
+## Configuration
+
+The package provided should automatically install the following configuration file:
+
+- [`/etc/libnss-aad.conf`](../debian/libnss-aad.conf)
+
 ## Troubleshooting
 
 If you are unable to add the package repository due to it being served via HTTPS,
