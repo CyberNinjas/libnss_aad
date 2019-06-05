@@ -141,3 +141,7 @@ docker run -v $(pwd):/usr/src/libnss_aad -it cyberninjas/libnss_aad /bin/bash
 - [Azure AD v2.0 Protocols (Postman Collection)](https://app.getpostman.com/view-collection/8f5715ec514865a07e6a?referrer=https%3A%2F%2Fapp.getpostman.com%2Frun-collection%2F8f5715ec514865a07e6a)
 
 - [System Databases and Name Service Switch](https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html)
+
+## See also
+
+- [puppet-aad](https://github.com/Jnchi/puppet-aad)
