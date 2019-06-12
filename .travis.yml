@@ -3,9 +3,8 @@ sudo: required
 services:
 - docker
 script:
-- docker build . -t cyberninjas/libnss_aad
-- docker build . -t cyberninjas/libnss_aad:ubuntu-18.04 -f Dockerfile.ubuntu-18.04
-- docker run -v $(pwd):/usr/src/libnss_aad cyberninjas/libnss_aad /bin/sh -c "cp /usr/src/*.deb /usr/src/libnss_aad"
+- /bin/sh ./scripts/docker.sh
+- docker run -v $(pwd):/usr/src/libnss_aad cyberninjas/libnss_aad:debian /bin/sh -c "cp /usr/src/*.deb /usr/src/libnss_aad"
 deploy:
   provider: bintray
   file: .bintray.json
