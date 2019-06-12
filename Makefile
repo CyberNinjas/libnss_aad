@@ -31,7 +31,3 @@ install: libnss_aad
 
 clean: 
 	@rm -f libnss_aad.so.2 *.deb
-
-clean-all: clean
-	@make -C linux-pam maintainer-clean
-	@cd linux-pam && git reset --h
