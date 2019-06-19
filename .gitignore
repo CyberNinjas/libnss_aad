@@ -7,3 +7,4 @@ debian/.*
 debian/files
 debian/libnss-aad*
 *.deb
+bintray.json
