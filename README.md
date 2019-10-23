@@ -42,7 +42,7 @@ Create the file `/etc/libnss-aad.conf` and fill it with:
 
 **NOTE: For now, `client.secret` must be URL-encoded.**
 
-## Current behavior
+## Current Behavior
 
 ```terminal
 id tux
@@ -55,7 +55,7 @@ getent shadow tux
 tux:$2a$12$tlMH2KjgjCvd7gV0WVU4g.RxRe2vcXzmJ/WXLUQPRsE3yyjba9YCa:13571:0:99999:7:::
 ```
 
-## See Also
+## See also
 
 - https://github.com/outlook/libnss-aad
 - https://github.com/donapieppo/libnss-ato
